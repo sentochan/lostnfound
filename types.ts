@@ -96,6 +96,7 @@ export interface User {
   joinDate: string;
   avatarUrl: string;
   isAdmin?: boolean;
+  isBanned?: boolean;
   stats: {
     posts: number;
     found: number;

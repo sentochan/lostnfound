@@ -20,6 +20,7 @@ import Notifications from './screens/Notifications';
 import Feedback from './screens/Feedback';
 import EditProfile from './screens/EditProfile';
 import BoostPage from './screens/BoostPage';
+import AdminDashboard from './screens/AdminDashboard';
 import { MOCK_LOST_ITEMS, MOCK_USER, MOCK_NOTIFICATIONS } from './constants';
 import { LostItem, Conversation, Message, UserSettings, AppNotification, Theme, User } from './types';
 import { supabase } from './src/lib/supabaseClient';
@@ -536,6 +537,11 @@ const AppContent: React.FC = () => {
           } />
           <Route path="/report/:id" element={<ReportSighting items={items} onReport={addSighting} />} />
           <Route path="/boost/:id" element={<ProtectedRoute><BoostPage /></ProtectedRoute>} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboard items={items} user={user} />
+            </ProtectedRoute>
+          } />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
