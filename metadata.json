@@ -1,0 +1,8 @@
+{
+  "name": "Lost & Found app",
+  "description": "A community-driven platform for tracking lost pets and items with proximity alerts, interactive maps, and sighting reports.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
