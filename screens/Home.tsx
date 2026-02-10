@@ -7,13 +7,15 @@ import { supabase } from '../src/lib/supabaseClient';
 
 interface HomeProps {
   items: LostItem[];
-  user: User;
+  user: User | null;
   onToggleFavorite: (id: string) => void;
   unreadNotifications: number;
   searchQuery: string;
 }
 
 const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifications, searchQuery }) => {
+  if (!user) return <div className="flex items-center justify-center h-screen text-slate-500">Loading user data...</div>;
+
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('寵物');
   const [activeSubFilter, setActiveSubFilter] = useState('全部');
@@ -66,11 +68,15 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
 
   const parseDistance = (distStr: string): number => {
     if (!distStr || distStr === 'Unknown') return Infinity;
-    if (distStr.endsWith(' m')) {
-      return parseFloat(distStr) / 1000; // Convert to km
-    }
-    if (distStr.endsWith(' km')) {
-      return parseFloat(distStr);
+    try {
+      if (distStr.endsWith(' m')) {
+        return parseFloat(distStr) / 1000; // Convert to km
+      }
+      if (distStr.endsWith(' km')) {
+        return parseFloat(distStr);
+      }
+    } catch (e) {
+      return Infinity;
     }
     return Infinity;
   };
@@ -211,7 +217,7 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
         {/* Items List */}
         <div className="grid grid-cols-2 gap-4">
           {filteredItems.map(item => {
-            const dist = parseDistance(item.distance);
+            const dist = parseDistance(item.distance || '');
             // Boost Logic: check radius (2km) AND expiry
             const now = new Date();
             const expiry = item.boostExpiry ? new Date(item.boostExpiry) : null;

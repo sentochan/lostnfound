@@ -61,7 +61,7 @@ const AppContent: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsAuthenticated(true);
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setIsAuthenticated(false);
       }
@@ -72,29 +72,37 @@ const AppContent: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsAuthenticated(true);
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setIsAuthenticated(false);
-        setUser(MOCK_USER); // Reset or Keep mock for demo?
+        setUser(null);
       }
     });
 
     fetchItems();
-    // fetchNotifications(); // TODO: Implement fetch
-    // setNotifications(MOCK_NOTIFICATIONS); // Keep mock for now if table empty
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (supabaseUser: any) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', supabaseUser.id)
       .single();
 
     if (error) {
-      console.error('Error fetching profile:', error);
+      console.warn('Profile fetch failed or missing, falling back to auth metadata:', error);
+      // Fallback to Auth Metadata
+      setUser({
+        id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+        gender: supabaseUser.user_metadata?.gender as any || 'Secret',
+        location: supabaseUser.user_metadata?.location || '',
+        joinDate: new Date(supabaseUser.created_at).toLocaleDateString(),
+        avatarUrl: supabaseUser.user_metadata?.avatar_url || MOCK_USER.avatarUrl,
+        stats: { posts: 0, found: 0, clues: 0 }
+      });
       return;
     }
 

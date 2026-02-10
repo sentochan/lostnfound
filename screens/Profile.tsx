@@ -6,12 +6,13 @@ import BottomNav from '../components/BottomNav';
 
 interface ProfileProps {
   items: LostItem[];
-  user: User;
+  user: User | null;
   unreadNotifications: number;
   onUpdateStatus: (id: string, status: 'Lost' | 'Found' | 'Recovered' | 'Closed') => void;
 }
 
 const Profile: React.FC<ProfileProps> = ({ items, user, unreadNotifications, onUpdateStatus }) => {
+  if (!user) return <div className="flex items-center justify-center h-screen text-slate-500">Loading user profile...</div>;
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'Active' | 'Closed'>('Active');
 
