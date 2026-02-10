@@ -77,6 +77,7 @@ export interface LostItem {
   status: 'Lost' | 'Found' | 'Recovered' | 'Closed';
   ownerName: string;
   ownerId: string;
+  ownerAvatar?: string;
   distance: string;
   sightings: Sighting[];
   isFavorite?: boolean;

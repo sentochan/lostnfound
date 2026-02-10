@@ -20,7 +20,7 @@ import Notifications from './screens/Notifications';
 import Feedback from './screens/Feedback';
 import EditProfile from './screens/EditProfile';
 import BoostPage from './screens/BoostPage';
-import AdminDashboard from './screens/AdminDashboard';
+import Terms from './screens/Terms';
 import { MOCK_LOST_ITEMS, MOCK_USER, MOCK_NOTIFICATIONS } from './constants';
 import { LostItem, Conversation, Message, UserSettings, AppNotification, Theme, User } from './types';
 import { supabase } from './src/lib/supabaseClient';
@@ -115,6 +115,8 @@ const AppContent: React.FC = () => {
         location: data.location || '',
         joinDate: new Date(data.join_date).toLocaleDateString(),
         avatarUrl: data.avatar_url || MOCK_USER.avatarUrl,
+        isAdmin: data.is_admin,
+        isBanned: data.is_banned,
         stats: {
           posts: data.stats_posts || 0,
           found: data.stats_found || 0,
@@ -178,7 +180,8 @@ const AppContent: React.FC = () => {
       .from('items')
       .select(`
         *,
-        sightings (*)
+        sightings (*),
+        profiles:owner_id (avatar_url)
       `)
       .order('created_at', { ascending: false });
 
@@ -216,6 +219,7 @@ const AppContent: React.FC = () => {
           status: item.status,
           ownerName: item.owner_name || 'Anonymous',
           ownerId: item.owner_id,
+          ownerAvatar: item.profiles?.avatar_url,
           distance: distanceStr,
           sightings: item.sightings?.map((s: any) => ({
             id: s.id,
@@ -373,181 +377,176 @@ const AppContent: React.FC = () => {
           lastUpdate: '剛剛'
         } : c);
       } else {
-        return [...prev, {
-          itemId: item.id,
+        itemId: item.id,
           itemTitle: item.title,
-          itemImage: item.mainImageUrl,
-          ownerId: item.ownerId,
-          ownerName: item.ownerName,
-          ownerAvatar: user.avatarUrl,
-          messages: [newMessage],
-          lastUpdate: '剛剛'
-        }];
-      }
+            itemImage: item.mainImageUrl,
+              ownerId: item.ownerId,
+                ownerName: item.ownerName,
+                  ownerAvatar: item.ownerAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3NxjLsiI4kSq820pD3mlps-jzJM4bVn29ZuEqkIPFrQrR1ks0Njhxh-GOy55JsIKPxInVFYkpdqZPoqsGMN1O6jEtE00ZJlDqZHi5c38vIQujWyks-58pTar1bUnHrGRfD0C_FKflC1RbyxQxlnLIm80sXfHDSoHjFhMSupLzbDENfYCvVmk-G9cpbMizSINiq27ykXTla9L7JaEaAQBdKUGqebomX2a7IL7SIciheLZOTo_8kLLSov10sVTmT2syjAWN1CVWINx',
+                    messages: [newMessage],
+                      lastUpdate: '剛剛'
+      }];
+    }
     });
 
-    triggerNotification("訊息已送達", `已將您的訊息發送給 ${item.ownerName}`);
-  };
+  triggerNotification("訊息已送達", `已將您的訊息發送給 ${item.ownerName}`);
+};
 
-  const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-  };
+const markNotificationAsRead = (id: string) => {
+  setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+};
 
-  const handleUnlock = (targetPath?: string) => {
-    setIsLocked(false);
-    if (targetPath) {
-      navigate(targetPath);
-    } else if (!isAuthenticated) {
-      navigate('/login');
-    }
-  };
-
-  const handleLogin = () => {
-    // This might be redundant if we listen to onAuthStateChange, but useful for navigation
-    setIsAuthenticated(true);
-    navigate('/');
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
+const handleUnlock = (targetPath?: string) => {
+  setIsLocked(false);
+  if (targetPath) {
+    navigate(targetPath);
+  } else if (!isAuthenticated) {
     navigate('/login');
-  };
+  }
+};
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    // TODO: Update profiles table
-    triggerNotification("更新成功", "您的個人資料已成功儲存。", 'success');
-  };
+const handleLogin = () => {
+  // This might be redundant if we listen to onAuthStateChange, but useful for navigation
+  setIsAuthenticated(true);
+  navigate('/');
+};
 
-  const showGlobalSearch = location.pathname === '/' || location.pathname === '/map';
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setIsAuthenticated(false);
+  navigate('/login');
+};
 
-  // Protected Route Component
-  const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-    if (isLoading) {
-      return (
-        <div className="flex-1 flex items-center justify-center h-screen bg-background-light dark:bg-background-dark">
-          <div className="flex flex-col items-center gap-4">
-            <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-500 font-bold animate-pulse">正在載入...</p>
+const handleUpdateUser = (updatedUser: User) => {
+  setUser(updatedUser);
+  // TODO: Update profiles table
+  triggerNotification("更新成功", "您的個人資料已成功儲存。", 'success');
+};
+
+const showGlobalSearch = location.pathname === '/' || location.pathname === '/map';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-screen bg-background-light dark:bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-bold animate-pulse">正在載入...</p>
+        </div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+/* LockScreen is disabled/bypassed for now to make Login the effective "first page" */
+/*
+if (isLocked) {
+  return <LockScreen onUnlock={handleUnlock} />;
+}
+*/
+
+return (
+  <div className="flex justify-center min-h-screen bg-neutral-100 dark:bg-black transition-colors duration-500">
+    <div className="relative w-full max-w-md bg-background-light dark:bg-background-dark shadow-2xl min-h-screen flex flex-col overflow-hidden animate-in fade-in duration-500">
+
+      {/* Global Search Header */}
+      {showGlobalSearch && isAuthenticated && (
+        <div className="sticky top-[72px] z-[45] px-4 py-2 bg-background-light/40 dark:bg-background-dark/40 backdrop-blur-md animate-in slide-in-from-top-2 duration-300">
+          <div className="relative group">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/80 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 focus:border-primary/40 rounded-2xl py-3 pl-12 pr-10 text-sm text-slate-900 dark:text-white placeholder:text-slate-500 outline-none transition-all shadow-sm"
+              placeholder="搜尋關鍵字、標題或地點..."
+              type="text"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center bg-slate-200 dark:bg-white/10 rounded-full text-slate-500"
+              >
+                <span className="material-symbols-outlined text-sm font-black">close</span>
+              </button>
+            )}
           </div>
         </div>
-      );
-    }
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
-    return children;
-  };
+      )}
 
-  /* LockScreen is disabled/bypassed for now to make Login the effective "first page" */
-  /*
-  if (isLocked) {
-    return <LockScreen onUnlock={handleUnlock} />;
-  }
-  */
-
-  return (
-    <div className="flex justify-center min-h-screen bg-neutral-100 dark:bg-black transition-colors duration-500">
-      <div className="relative w-full max-w-md bg-background-light dark:bg-background-dark shadow-2xl min-h-screen flex flex-col overflow-hidden animate-in fade-in duration-500">
-
-        {/* Global Search Header */}
-        {showGlobalSearch && isAuthenticated && (
-          <div className="sticky top-[72px] z-[45] px-4 py-2 bg-background-light/40 dark:bg-background-dark/40 backdrop-blur-md animate-in slide-in-from-top-2 duration-300">
-            <div className="relative group">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/80 dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 focus:border-primary/40 rounded-2xl py-3 pl-12 pr-10 text-sm text-slate-900 dark:text-white placeholder:text-slate-500 outline-none transition-all shadow-sm"
-                placeholder="搜尋關鍵字、標題或地點..."
-                type="text"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 size-6 flex items-center justify-center bg-slate-200 dark:bg-white/10 rounded-full text-slate-500"
-                >
-                  <span className="material-symbols-outlined text-sm font-black">close</span>
-                </button>
-              )}
+      {notification && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-top duration-300 ${notification.type === 'error' ? 'bg-red-600' : notification.type === 'success' ? 'bg-green-600' : 'bg-slate-900 dark:bg-background-dark/95'}`}>
+          <div className="flex items-center gap-4">
+            <div className={`size-11 rounded-full flex items-center justify-center shrink-0 shadow-inner ${notification.type === 'error' ? 'bg-white text-red-600' : notification.type === 'success' ? 'bg-white text-green-600' : 'bg-primary text-slate-900'}`}>
+              <span className="material-symbols-outlined font-black text-2xl">
+                {notification.type === 'error' ? 'report' : notification.type === 'success' ? 'check' : 'chat'}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-white text-base font-black leading-tight mb-0.5">{notification.title}</p>
+              <p className="text-white/90 text-xs font-bold leading-snug">{notification.body}</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {notification && (
-          <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-top duration-300 ${notification.type === 'error' ? 'bg-red-600' : notification.type === 'success' ? 'bg-green-600' : 'bg-slate-900 dark:bg-background-dark/95'}`}>
-            <div className="flex items-center gap-4">
-              <div className={`size-11 rounded-full flex items-center justify-center shrink-0 shadow-inner ${notification.type === 'error' ? 'bg-white text-red-600' : notification.type === 'success' ? 'bg-white text-green-600' : 'bg-primary text-slate-900'}`}>
-                <span className="material-symbols-outlined font-black text-2xl">
-                  {notification.type === 'error' ? 'report' : notification.type === 'success' ? 'check' : 'chat'}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-white text-base font-black leading-tight mb-0.5">{notification.title}</p>
-                <p className="text-white/90 text-xs font-bold leading-snug">{notification.body}</p>
-              </div>
-            </div>
-          </div>
-        )}
+      <Routes>
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Home items={items} user={user} onToggleFavorite={toggleFavorite} unreadNotifications={notifications.filter(n => !n.isRead).length} searchQuery={searchQuery} />
+          </ProtectedRoute>
+        } />
+        <Route path="/map" element={
+          <ProtectedRoute>
+            <MapView items={items} searchQuery={searchQuery} />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile items={items} user={user} unreadNotifications={notifications.filter(n => !n.isRead).length} onUpdateStatus={updateItemStatus} />
+          </ProtectedRoute>
+        } />
+        <Route path="/manage/:id" element={
+          <ProtectedRoute>
+            <ManagePost items={items} onUpdateStatus={updateItemStatus} onUpdateReward={updateItemReward} onUpdateLocation={updateItemLocation} />
+          </ProtectedRoute>
+        } />
+        <Route path="/edit-profile" element={<EditProfile user={user} onUpdate={handleUpdateUser} />} />
+        <Route path="/settings" element={<Settings settings={settings} onUpdateSettings={setSettings} onLogout={handleLogout} />} />
+        <Route path="/feedback" element={<Feedback onComplete={() => triggerNotification("感謝您的回饋", "我們將儘快處理您的寶貴意見。", 'success')} />} />
+        <Route path="/messages" element={
+          <ProtectedRoute>
+            <Messages conversations={conversations} />
+          </ProtectedRoute>
+        } />
+        <Route path="/notifications" element={<Notifications notifications={notifications} onMarkAsRead={markNotificationAsRead} />} />
+        <Route path="/chat/:itemId" element={<Chat items={items} conversations={conversations} onSendMessage={sendMessage} user={user} />} />
+        <Route path="/login" element={!isAuthenticated ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/item/:id" element={
+          <ErrorBoundary>
+            <ItemDetail items={items} onToggleFavorite={toggleFavorite} onReportFake={handleFakeReport} />
+          </ErrorBoundary>
+        } />
+        <Route path="/sighting/:itemId/:sightingId" element={<SightingDetail items={items} />} />
+        <Route path="/create" element={
+          <ProtectedRoute>
+            <CreatePost />
+          </ProtectedRoute>
+        } />
+        <Route path="/report/:id" element={<ReportSighting items={items} onReport={addSighting} />} />
+        <Route path="/boost/:id" element={<ProtectedRoute><BoostPage /></ProtectedRoute>} />
+        <Route path="/terms" element={<Terms />} />
 
-        <Routes>
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Home items={items} user={user} onToggleFavorite={toggleFavorite} unreadNotifications={notifications.filter(n => !n.isRead).length} searchQuery={searchQuery} />
-            </ProtectedRoute>
-          } />
-          <Route path="/map" element={
-            <ProtectedRoute>
-              <MapView items={items} searchQuery={searchQuery} />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile items={items} user={user} unreadNotifications={notifications.filter(n => !n.isRead).length} onUpdateStatus={updateItemStatus} />
-            </ProtectedRoute>
-          } />
-          <Route path="/manage/:id" element={
-            <ProtectedRoute>
-              <ManagePost items={items} onUpdateStatus={updateItemStatus} onUpdateReward={updateItemReward} onUpdateLocation={updateItemLocation} />
-            </ProtectedRoute>
-          } />
-          <Route path="/edit-profile" element={<EditProfile user={user} onUpdate={handleUpdateUser} />} />
-          <Route path="/settings" element={<Settings settings={settings} onUpdateSettings={setSettings} onLogout={handleLogout} />} />
-          <Route path="/feedback" element={<Feedback onComplete={() => triggerNotification("感謝您的回饋", "我們將儘快處理您的寶貴意見。", 'success')} />} />
-          <Route path="/messages" element={
-            <ProtectedRoute>
-              <Messages conversations={conversations} />
-            </ProtectedRoute>
-          } />
-          <Route path="/notifications" element={<Notifications notifications={notifications} onMarkAsRead={markNotificationAsRead} />} />
-          <Route path="/chat/:itemId" element={<Chat items={items} conversations={conversations} onSendMessage={sendMessage} />} />
-          <Route path="/login" element={!isAuthenticated ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/item/:id" element={
-            <ErrorBoundary>
-              <ItemDetail items={items} onToggleFavorite={toggleFavorite} onReportFake={handleFakeReport} />
-            </ErrorBoundary>
-          } />
-          <Route path="/sighting/:itemId/:sightingId" element={<SightingDetail items={items} />} />
-          <Route path="/create" element={
-            <ProtectedRoute>
-              <CreatePost />
-            </ProtectedRoute>
-          } />
-          <Route path="/report/:id" element={<ReportSighting items={items} onReport={addSighting} />} />
-          <Route path="/boost/:id" element={<ProtectedRoute><BoostPage /></ProtectedRoute>} />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <AdminDashboard items={items} user={user} />
-            </ProtectedRoute>
-          } />
-
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </div>
-  );
+  </div>
+);
 };
 
 const App: React.FC = () => {

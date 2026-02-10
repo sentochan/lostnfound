@@ -1,16 +1,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { LostItem, Conversation, Message } from '../types';
-import { MOCK_USER } from '../constants';
+import { LostItem, Conversation, User } from '../types';
 
 interface ChatProps {
   items: LostItem[];
   conversations: Conversation[];
   onSendMessage: (itemId: string, text: string) => void;
+  user: User | null;
 }
 
-const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage }) => {
+const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage, user }) => {
   const { itemId } = useParams();
   const navigate = useNavigate();
   const [inputText, setInputText] = useState('');
@@ -41,10 +41,10 @@ const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage }) => {
           <span className="material-symbols-outlined font-black">arrow_back_ios_new</span>
         </button>
         <div className="size-11 rounded-2xl overflow-hidden bg-slate-300 border-2 border-primary/20 shadow-sm">
-          <img src={conversation?.ownerAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3NxjLsiI4kSq820pD3mlps-jzJM4bVn29ZuEqkIPFrQrR1ks0Njhxh-GOy55JsIKPxInVFYkpdqZPoqsGMN1O6jEtE00ZJlDqZHi5c38vIQujWyks-58pTar1bUnHrGRfD0C_FKflC1RbyxQxlnLIm80sXfHDSoHjFhMSupLzbDENfYCvVmk-G9cpbMizSINiq27ykXTla9L7JaEaAQBdKUGqebomX2a7IL7SIciheLZOTo_8kLLSov10sVTmT2syjAWN1CVWINx'} className="size-full object-cover" alt="Avatar" />
+          <img src={conversation?.ownerAvatar || item.ownerAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3NxjLsiI4kSq820pD3mlps-jzJM4bVn29ZuEqkIPFrQrR1ks0Njhxh-GOy55JsIKPxInVFYkpdqZPoqsGMN1O6jEtE00ZJlDqZHi5c38vIQujWyks-58pTar1bUnHrGRfD0C_FKflC1RbyxQxlnLIm80sXfHDSoHjFhMSupLzbDENfYCvVmk-G9cpbMizSINiq27ykXTla9L7JaEaAQBdKUGqebomX2a7IL7SIciheLZOTo_8kLLSov10sVTmT2syjAWN1CVWINx'} className="size-full object-cover" alt="Avatar" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-black text-slate-900 dark:text-white truncate leading-tight">{item.ownerName}</h2>
+          <h2 className="text-base font-black text-slate-900 dark:text-white truncate leading-tight">{conversation?.ownerName || item.ownerName}</h2>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></span>
             <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">線上服務中</span>
@@ -85,7 +85,7 @@ const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage }) => {
           </div>
         ) : (
           messages.map((m) => {
-            const isMe = m.senderId === MOCK_USER.id;
+            const isMe = user ? m.senderId === user.id : false;
             return (
               <div
                 key={m.id}
@@ -93,8 +93,8 @@ const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage }) => {
               >
                 <div
                   className={`max-w-[85%] px-5 py-3.5 rounded-3xl text-base font-bold shadow-sm ${isMe
-                      ? 'bg-primary text-slate-900 rounded-tr-none shadow-primary/20'
-                      : 'bg-white dark:bg-white/10 text-slate-900 dark:text-white rounded-tl-none border-2 border-slate-100 dark:border-transparent'
+                    ? 'bg-primary text-slate-900 rounded-tr-none shadow-primary/20'
+                    : 'bg-white dark:bg-white/10 text-slate-900 dark:text-white rounded-tl-none border-2 border-slate-100 dark:border-transparent'
                     }`}
                 >
                   {m.text}
@@ -124,8 +124,8 @@ const Chat: React.FC<ChatProps> = ({ items, conversations, onSendMessage }) => {
             type="submit"
             disabled={!inputText.trim()}
             className={`size-14 rounded-2xl flex items-center justify-center transition-all ${inputText.trim()
-                ? 'bg-primary text-slate-900 shadow-xl shadow-primary/40 scale-100 active:scale-90'
-                : 'bg-slate-300 dark:bg-white/10 text-slate-500 dark:text-slate-600 scale-95 opacity-50'
+              ? 'bg-primary text-slate-900 shadow-xl shadow-primary/40 scale-100 active:scale-90'
+              : 'bg-slate-300 dark:bg-white/10 text-slate-500 dark:text-slate-600 scale-95 opacity-50'
               }`}
           >
             <span className="material-symbols-outlined font-black text-2xl">send</span>
