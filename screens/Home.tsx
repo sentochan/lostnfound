@@ -111,12 +111,17 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
 
     // 6. Sorting & Boost Logic
     return [...result].sort((a, b) => {
-      // Boost Priority Check: Only if distance <= 2km
+      const now = new Date();
+
       const distA = parseDistance(a.distance);
       const distB = parseDistance(b.distance);
 
-      const isBoostedA = a.isBoosted && distA <= 2;
-      const isBoostedB = b.isBoosted && distB <= 2;
+      // Boost Check
+      const expiryA = a.boostExpiry ? new Date(a.boostExpiry) : null;
+      const expiryB = b.boostExpiry ? new Date(b.boostExpiry) : null;
+
+      const isBoostedA = a.isBoosted && distA <= 2 && (expiryA ? now <= expiryA : true);
+      const isBoostedB = b.isBoosted && distB <= 2 && (expiryB ? now <= expiryB : true);
 
       if (isBoostedA && !isBoostedB) return -1;
       if (!isBoostedA && isBoostedB) return 1;
@@ -206,8 +211,11 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
         {/* Items List */}
         <div className="grid grid-cols-2 gap-4">
           {filteredItems.map(item => {
-            const dist = parseDistance(item.distance);
-            const isBoosted = item.isBoosted && dist <= 2;
+            // Boost Logic: check radius (2km) AND expiry
+            const now = new Date();
+            const expiry = item.boostExpiry ? new Date(item.boostExpiry) : null;
+            const isExpired = expiry ? now > expiry : false;
+            const isBoosted = item.isBoosted && dist <= 2 && !isExpired;
 
             return (
               <div
@@ -231,11 +239,9 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
                     <span className="material-symbols-outlined text-[10px] animate-pulse">rocket_launch</span>
                     <span>
                       {(() => {
-                        if (!item.boostExpiry) return '置頂推廣';
-                        const now = new Date();
-                        const expiry = new Date(item.boostExpiry);
+                        if (!expiry) return '置頂推廣';
                         const diffMs = expiry.getTime() - now.getTime();
-                        if (diffMs <= 0) return '已過期'; // Should strictly be filtered out by isBoosted logic but safety check
+                        if (diffMs <= 0) return ''; // Should not happen due to isBoosted check
 
                         const hours = Math.floor(diffMs / (1000 * 60 * 60));
                         const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
