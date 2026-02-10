@@ -278,7 +278,9 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
                     <h3 className={`font-black leading-tight mb-1 line-clamp-2 ${isBoosted ? 'text-2xl' : 'text-sm'}`}>{item.title}</h3>
                     <div className="flex items-center gap-1 opacity-80">
                       <span className="material-symbols-outlined text-[10px]">location_on</span>
-                      <p className="text-[10px] font-bold truncate">{item.lastSeenLocation}</p>
+                      <p className="text-[10px] font-bold truncate">
+                        {item.lastSeenLocation.replace(/\s*\(-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?\)$/, '')}
+                      </p>
                       <span className="mx-1">•</span>
                       <p className="text-[10px]">{item.distance}</p>
                     </div>

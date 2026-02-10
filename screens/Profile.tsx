@@ -31,8 +31,9 @@ const Profile: React.FC<ProfileProps> = ({ items, user, unreadNotifications, onU
     }
   };
 
-  const activeItems = items.filter(i => i.status === 'Lost' || i.status === 'Found');
-  const closedItems = items.filter(i => i.status === 'Recovered' || i.status === 'Closed');
+  const userItems = items.filter(i => i.ownerId === user.id);
+  const activeItems = userItems.filter(i => i.status === 'Lost' || i.status === 'Found');
+  const closedItems = userItems.filter(i => i.status === 'Recovered' || i.status === 'Closed');
 
   const displayItems = activeTab === 'Active' ? activeItems : closedItems;
 
