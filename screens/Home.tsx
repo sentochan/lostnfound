@@ -11,9 +11,10 @@ interface HomeProps {
   onToggleFavorite: (id: string) => void;
   unreadNotifications: number;
   searchQuery: string;
+  locationPermissionDenied: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifications, searchQuery }) => {
+const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifications, searchQuery, locationPermissionDenied }) => {
   if (!user) return <div className="flex items-center justify-center h-screen text-slate-500">Loading user data...</div>;
 
   const navigate = useNavigate();

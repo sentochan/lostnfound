@@ -158,6 +158,7 @@ const AppContent: React.FC = () => {
 
   // User Location State
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -167,9 +168,13 @@ const AppContent: React.FC = () => {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
+          setLocationPermissionDenied(false);
         },
         (error) => {
           console.error("Error getting location:", error);
+          if (error.code === error.PERMISSION_DENIED) {
+            setLocationPermissionDenied(true);
+          }
         }
       );
     }
@@ -244,10 +249,9 @@ const AppContent: React.FC = () => {
   };
 
   // Re-fetch or re-calc when user location changes
+  // Re-fetch or re-calc when user location changes
   useEffect(() => {
-    if (userLocation) {
-      fetchItems();
-    }
+    fetchItems();
   }, [userLocation]);
 
   const triggerNotification = (title: string, body: string, type: 'info' | 'error' | 'success' = 'info') => {
@@ -498,7 +502,14 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={
             <ProtectedRoute>
-              <Home items={items} user={user} onToggleFavorite={toggleFavorite} unreadNotifications={notifications.filter(n => !n.isRead).length} searchQuery={searchQuery} />
+              <Home
+                items={items}
+                user={user}
+                onToggleFavorite={toggleFavorite}
+                unreadNotifications={notifications.filter(n => !n.isRead).length}
+                searchQuery={searchQuery}
+                locationPermissionDenied={locationPermissionDenied}
+              />
             </ProtectedRoute>
           } />
           <Route path="/map" element={
