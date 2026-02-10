@@ -377,15 +377,17 @@ const AppContent: React.FC = () => {
           lastUpdate: '剛剛'
         } : c);
       } else {
-        itemId: item.id,
+        return [...prev, {
+          itemId: item.id,
           itemTitle: item.title,
-            itemImage: item.mainImageUrl,
-              ownerId: item.ownerId,
-                ownerName: item.ownerName,
-                  ownerAvatar: item.ownerAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3NxjLsiI4kSq820pD3mlps-jzJM4bVn29ZuEqkIPFrQrR1ks0Njhxh-GOy55JsIKPxInVFYkpdqZPoqsGMN1O6jEtE00ZJlDqZHi5c38vIQujWyks-58pTar1bUnHrGRfD0C_FKflC1RbyxQxlnLIm80sXfHDSoHjFhMSupLzbDENfYCvVmk-G9cpbMizSINiq27ykXTla9L7JaEaAQBdKUGqebomX2a7IL7SIciheLZOTo_8kLLSov10sVTmT2syjAWN1CVWINx',
-                    messages: [newMessage],
-                      lastUpdate: '剛剛'
-      }];
+          itemImage: item.mainImageUrl,
+          ownerId: item.ownerId,
+          ownerName: item.ownerName,
+          ownerAvatar: item.ownerAvatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBR3NxjLsiI4kSq820pD3mlps-jzJM4bVn29ZuEqkIPFrQrR1ks0Njhxh-GOy55JsIKPxInVFYkpdqZPoqsGMN1O6jEtE00ZJlDqZHi5c38vIQujWyks-58pTar1bUnHrGRfD0C_FKflC1RbyxQxlnLIm80sXfHDSoHjFhMSupLzbDENfYCvVmk-G9cpbMizSINiq27ykXTla9L7JaEaAQBdKUGqebomX2a7IL7SIciheLZOTo_8kLLSov10sVTmT2syjAWN1CVWINx',
+          messages: [newMessage],
+          lastUpdate: '剛剛'
+        }];
+      }
     }
     });
 
