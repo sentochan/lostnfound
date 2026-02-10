@@ -32,7 +32,7 @@ const AppContent: React.FC = () => {
   const [items, setItems] = useState<LostItem[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [user, setUser] = useState<User>(MOCK_USER); // Fallback to mock user safely until loaded
+  const [user, setUser] = useState<User | null>(null);
   const [notification, setNotification] = useState<{ title: string, body: string, type?: 'info' | 'error' | 'success' } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -175,7 +175,7 @@ const AppContent: React.FC = () => {
 
     if (error) {
       console.error('Error fetching items:', error);
-      setItems(MOCK_LOST_ITEMS); // Fallback
+      setItems([]); // Fallback to empty
       return;
     }
 

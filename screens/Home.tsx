@@ -211,6 +211,7 @@ const Home: React.FC<HomeProps> = ({ items, user, onToggleFavorite, unreadNotifi
         {/* Items List */}
         <div className="grid grid-cols-2 gap-4">
           {filteredItems.map(item => {
+            const dist = parseDistance(item.distance);
             // Boost Logic: check radius (2km) AND expiry
             const now = new Date();
             const expiry = item.boostExpiry ? new Date(item.boostExpiry) : null;
