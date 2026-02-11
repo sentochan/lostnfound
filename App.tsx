@@ -180,6 +180,9 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
+  // Debug State
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   const fetchItems = async () => {
     const { data, error } = await supabase
       .from('items')
@@ -192,11 +195,13 @@ const AppContent: React.FC = () => {
 
     if (error) {
       console.error('Error fetching items:', error);
+      setFetchError(error.message);
       setItems([]); // Fallback to empty
       return;
     }
 
     if (data) {
+      setFetchError(null);
       const mappedItems: LostItem[] = data.map((item: any) => {
         let distanceStr = 'Unknown';
 
